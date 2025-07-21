@@ -1,5 +1,5 @@
 import ClientProfileMenu from "@/components/ClientProfileMenu";
-import { isAuthenticated, signOut } from "@/lib/actions/auth.action";
+import { isAuthenticated } from "@/lib/actions/auth.action";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -10,10 +10,6 @@ const RootLayout = async ({ children }: { children: ReactNode }) => {
   if (!isUserAuthenticated) {
     redirect("/sign-in");
   }
-  const handleLogout = async () => {
-    await signOut();
-    redirect("/sign-in");
-  };
   // return (
   //   <div className="root-layout">
   //     <nav>
