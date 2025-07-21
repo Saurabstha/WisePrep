@@ -1,4 +1,5 @@
-import { isAuthenticated } from "@/lib/actions/auth.action";
+import ClientProfileMenu from "@/components/ClientProfileMenu";
+import { isAuthenticated, signOut } from "@/lib/actions/auth.action";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -9,13 +10,33 @@ const RootLayout = async ({ children }: { children: ReactNode }) => {
   if (!isUserAuthenticated) {
     redirect("/sign-in");
   }
+  const handleLogout = async () => {
+    await signOut();
+    redirect("/sign-in");
+  };
+  // return (
+  //   <div className="root-layout">
+  //     <nav>
+  //       <Link href="/" className="flex items-center gap-2">
+  //         <Image src="/logo.svg" alt="Logo" width={38} height={32} />
+  //         <h2 className="text-primary-100">WisePrep</h2>
+  //         <ClientProfileMenu />
+  //       </Link>
+  //     </nav>
+  //     {children}
+  //   </div>
+  // );
+
   return (
     <div className="root-layout">
-      <nav>
+      <nav className="flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
           <Image src="/logo.svg" alt="Logo" width={38} height={32} />
           <h2 className="text-primary-100">WisePrep</h2>
         </Link>
+
+        {/* Separate ClientProfileMenu outside of the Link */}
+        <ClientProfileMenu />
       </nav>
       {children}
     </div>
