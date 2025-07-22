@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { vapi } from "@/lib/vapi.sdk";
 import { interviewer } from "@/constants";
+import { createFeedback } from "@/lib/actions/general.action";
 
 enum CallStatus {
   INACTIVE = "INACTIVE",
@@ -43,38 +44,39 @@ const Agent = ({
         const newMessage = { role: message.role, content: message.transcript };
         setMessages((prev) => [...prev, newMessage]);
       }
+    };
 
-      const onSpeechStart = () => setIsSpeaking(true);
-      const onSpeechEnd = () => setIsSpeaking(false);
+    const onSpeechStart = () => setIsSpeaking(true);
+    const onSpeechEnd = () => setIsSpeaking(false);
 
-      const onCallError = (error: Error) => {
-        console.log("Call error:", error);
-      };
-      vapi.on("call-start", onCallStart);
-      vapi.on("call-end", onCallEnd);
-      vapi.on("message", onMessage);
-      vapi.on("speech-start", onSpeechStart);
-      vapi.on("speech-end", onSpeechEnd);
-      vapi.on("error", onCallError);
+    const onCallError = (error: Error) => {
+      console.log("Call error:", error);
+    };
+    vapi.on("call-start", onCallStart);
+    vapi.on("call-end", onCallEnd);
+    vapi.on("message", onMessage);
+    vapi.on("speech-start", onSpeechStart);
+    vapi.on("speech-end", onSpeechEnd);
+    vapi.on("error", onCallError);
 
-      return () => {
-        vapi.off("call-start", onCallStart);
-        vapi.off("call-end", onCallEnd);
-        vapi.off("message", onMessage);
-        vapi.off("speech-start", onSpeechStart);
-        vapi.off("speech-end", onSpeechEnd);
-        vapi.off("error", onCallError);
-      };
+    return () => {
+      vapi.off("call-start", onCallStart);
+      vapi.off("call-end", onCallEnd);
+      vapi.off("message", onMessage);
+      vapi.off("speech-start", onSpeechStart);
+      vapi.off("speech-end", onSpeechEnd);
+      vapi.off("error", onCallError);
     };
   }, []);
 
   // create server action to handle feedback generation
   const handleGenerateFeedback = async (messages: SavedMessage[]) => {
-    console.log("Generating feedback with messages:", messages);
-    const { success, id } = {
-      success: true,
-      id: "feedback-id", // Mocked ID for demonstration
-    };
+    const { success, feedbackId: id } = await createFeedback({
+      interviewId: interviewId!,
+      userId: userId!,
+      transcript: messages,
+    });
+    console.log("Create feedback result and its id:::", success, id);
     if (success && id) {
       router.push(`/interview/${interviewId}/feedback`);
     } else {
@@ -84,22 +86,18 @@ const Agent = ({
   };
 
   useEffect(() => {
-    // if (messages.length > 0) {
-    //   setLastMessage(messages[messages.length - 1].content);
-    // }
+    if (messages.length > 0) {
+      setLastMessage(messages[messages.length - 1].content);
+    }
 
     if (callStatus === CallStatus.FINISHED) {
       if (type === "generate") {
-        router.push(`/`);
+        router.push("/");
       } else {
         handleGenerateFeedback(messages);
       }
     }
-
-    if (callStatus === CallStatus.FINISHED) {
-      router.push("/");
-    }
-  }, [messages, callStatus, type, userId]);
+  }, [messages, callStatus, interviewId, router, type, userId]);
 
   const handleCall = async () => {
     setCallStatus(CallStatus.CONNECTING);
